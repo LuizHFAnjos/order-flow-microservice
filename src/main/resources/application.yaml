@@ -1,3 +1,10 @@
 spring:
   application:
     name: order-flow
+
+  mongodb:
+    uri: mongodb://admin:123@localhost:27017/order-flow?authSource=admin
+
+  data:
+    mongodb:
+      auto-index-creation: true
