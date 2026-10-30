@@ -1,10 +1,13 @@
 package com.LuizHFAnjos.order_flow.service;
 
+import com.LuizHFAnjos.order_flow.controller.dto.OrderResponse;
 import com.LuizHFAnjos.order_flow.dto.OrderCreatedEvent;
 import com.LuizHFAnjos.order_flow.entity.OrderEntity;
 import com.LuizHFAnjos.order_flow.entity.OrderItem;
 import com.LuizHFAnjos.order_flow.repository.OrderRepository;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,6 +33,12 @@ public class OrderService {
 
     }
 
+    public Page<OrderResponse> findAllByCustomerId(Long customerId, PageRequest pageRequest){
+        var orders = orderRepository.findAllByCustomerId(customerId, pageRequest);
+
+        return orders.map(OrderResponse::fromEntity);
+    }
+
     private BigDecimal getTotal(OrderCreatedEvent event) {
         return event.itens()
                 .stream()
@@ -43,4 +52,6 @@ public class OrderService {
                 .map(i -> new OrderItem(i.produto(), i.quantidade(), i.preco()))
                 .toList();
     }
+
+
 }
