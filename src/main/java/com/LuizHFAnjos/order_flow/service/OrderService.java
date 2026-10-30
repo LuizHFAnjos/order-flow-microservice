@@ -5,21 +5,28 @@ import com.LuizHFAnjos.order_flow.dto.OrderCreatedEvent;
 import com.LuizHFAnjos.order_flow.entity.OrderEntity;
 import com.LuizHFAnjos.order_flow.entity.OrderItem;
 import com.LuizHFAnjos.order_flow.repository.OrderRepository;
+import org.bson.Document;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+import static org.springframework.data.mongodb.core.aggregation.Aggregation.*;
+
 @Service
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final MongoTemplate mongoTemplate;
 
-    public OrderService(OrderRepository orderRepository) {
+    public OrderService(OrderRepository orderRepository, MongoTemplate mongoTemplate) {
         this.orderRepository = orderRepository;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public void save(OrderCreatedEvent event){
@@ -51,6 +58,17 @@ public class OrderService {
         return event.itens().stream()
                 .map(i -> new OrderItem(i.produto(), i.quantidade(), i.preco()))
                 .toList();
+    }
+
+    public BigDecimal findTotalOnOrdersByCostumerId(Long customerId){
+        var aggregations = newAggregation(
+                match(Criteria.where("customerId").is(customerId)),
+                group().sum("total").as("total")
+        );
+
+        var response = mongoTemplate.aggregate(aggregations, "tb_orders", Document.class);
+
+        return new BigDecimal(response.getUniqueMappedResult().get("total").toString());
     }
 
 
